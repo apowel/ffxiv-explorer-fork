@@ -893,13 +893,37 @@ public class FileManagerWindow extends JFrame implements TreeSelectionListener, 
 
             Loading_Dialog loadingDialog = new Loading_Dialog(FileManagerWindow.this, files.size());
             loadingDialog.setTitle("Extracting...");
-            ExtractTask task = new ExtractTask(files, loadingDialog, doConvert);
-            task.execute();
-            loadingDialog.setLocationRelativeTo(this);
-            loadingDialog.setVisible(true);
+            if(files.stream().count() > 10)
+            {
+                java.util.List<java.util.ArrayList<SqPackFile>> splitLists = splitArrayList(files, 10);
+
+                for (java.util.ArrayList<SqPackFile> list : splitLists)
+                {
+                    ExtractTask task = new ExtractTask(list, loadingDialog, doConvert);
+                    task.execute();
+                    loadingDialog.setLocationRelativeTo(this);
+                    loadingDialog.setVisible(true);
+                }
+            }
+            else {
+                ExtractTask task = new ExtractTask(files, loadingDialog, doConvert);
+                task.execute();
+                loadingDialog.setLocationRelativeTo(this);
+                loadingDialog.setVisible(true);
+            }
         }
     }
+    private java.util.List<java.util.ArrayList<SqPackFile>> splitArrayList(ArrayList<SqPackFile> originalList, int maxSize) {
+        java.util.List<java.util.ArrayList<SqPackFile>> splitLists = new java.util.ArrayList<>();
 
+        for (int i = 0; i < originalList.size(); i += maxSize) {
+            int endIndex = Math.min(i + maxSize, originalList.size());
+            java.util.ArrayList<SqPackFile> sublist = new ArrayList<>(originalList.subList(i, endIndex));
+            splitLists.add(sublist);
+        }
+
+        return splitLists;
+    }
     private String getDecompiledLuaString(byte[] data) {
         ByteBuffer buffer = ByteBuffer.wrap(data);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
